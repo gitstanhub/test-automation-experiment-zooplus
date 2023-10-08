@@ -1,0 +1,56 @@
+plugins {
+    id "java-library"
+    id "io.qameta.allure" version "2.11.2"
+    id "io.freefair.lombok" version "6.0.0-m2"
+}
+
+repositories {
+    mavenCentral()
+}
+
+def allureReportVersion = "2.21.0"
+def allureVersion = "2.21.0"
+def selenideVersion = "6.17.0"
+
+allure {
+    report {
+        version.set(allureReportVersion)
+    }
+    adapter {
+        aspectjWeaver.set(true)
+        frameworks {
+            junit5 {
+                adapterVersion.set(allureReportVersion)
+            }
+        }
+    }
+}
+
+dependencies {
+    testImplementation(
+            "org.assertj:assertj-core:3.24.2",
+            "org.junit.jupiter:junit-jupiter-api:5.9.2",
+            "org.junit.jupiter:junit-jupiter-engine:5.9.2",
+            "org.apache.httpcomponents:httpclient:4.5.13",
+            "com.neovisionaries:nv-i18n:1.29",
+            "com.google.guava:guava:32.1.1-jre",
+            "com.github.seregamorph:hamcrest-more-matchers:0.1",
+            "org.slf4j:slf4j-api:2.0.7",
+            "ch.qos.logback:logback-classic:1.4.8",
+            "org.aeonbits.owner:owner:1.0.12",
+            "io.qameta.allure:allure-selenide:${allureVersion}",
+            "com.codeborne:selenide:${selenideVersion}"
+    )
+}
+
+tasks.withType(Test) {
+    systemProperties(System.getProperties())
+    useJUnitPlatform()
+
+    testLogging {
+        lifecycle {
+            events "started", "skipped", "failed", "standard_error", "standard_out"
+            exceptionFormat "short"
+        }
+    }
+}
