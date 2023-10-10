@@ -32,10 +32,10 @@ public class CookiesPopup {
     }
 
     private SelenideElement findCookiesPopup() {
-        return $(By.cssSelector(COOKIES_POPUP));
+        return $(COOKIES_POPUP);
     }
 
     private SelenideElement findCookiesAcceptButton() {
-        return $(By.cssSelector(COOKIES_ACCEPT_BUTTON));
+        return $(COOKIES_ACCEPT_BUTTON);
     }
 }
