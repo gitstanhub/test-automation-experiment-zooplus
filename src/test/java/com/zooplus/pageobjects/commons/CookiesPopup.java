@@ -15,7 +15,7 @@ import static com.codeborne.selenide.Selenide.$;
 import static com.zooplus.locators.commons.CookiesPopupLocators.COOKIES_ACCEPT_BUTTON;
 import static com.zooplus.locators.commons.CookiesPopupLocators.COOKIES_POPUP;
 
-@Slf4j
+
 public class CookiesPopup {
 
     @Step
@@ -24,8 +24,9 @@ public class CookiesPopup {
         try {
             findCookiesPopup().shouldBe(Condition.visible, Duration.ofMillis(2000));
             findCookiesAcceptButton().click();
+            findCookiesPopup().shouldBe(Condition.visible, Duration.ofMillis(2000));
         } catch (ElementNotFound e) {
-            log.info("No cookies popup was found. Proceeding further...");
+//            log.info("No cookies popup was found. Proceeding further...");
         }
 
         return this;
