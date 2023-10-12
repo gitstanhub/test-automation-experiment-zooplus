@@ -36,5 +36,16 @@ public class CartTests extends WebTest {
 //        System.out.println("Here's the list: " + cartPage.getItemsFromEmptyCartCarousel(3, PriceSortingTypes.HIGHEST));
     }
 
-
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void multipleProductsCanBeAddedToCart() {
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendations()
+                .addProductFromTopRecommendations(2)
+                .addProductFromBottomRecommendations(3)
+                .verifyCartPageUrl()
+                .verifySubTotalPricePerProduct()
+                .verifySubtotalPriceForCart();
+    }
 }

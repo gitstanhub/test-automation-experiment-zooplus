@@ -8,6 +8,7 @@ import com.zooplus.constants.commons.PriceSortingTypes;
 import com.zooplus.models.ProductItem;
 import com.zooplus.pageobjects.base.SelenidePage;
 import com.zooplus.pageobjects.commons.CookiesPopup;
+import com.zooplus.utils.BrowserActions;
 import io.qameta.allure.Step;
 import org.junit.jupiter.api.Assertions;
 
@@ -26,6 +27,7 @@ public class CartPage extends SelenidePage {
     //add method that will add desired amount of products from a recommended section
 
     CookiesPopup cookiesPopup = new CookiesPopup();
+    BrowserActions browserActions = new BrowserActions();
 
     @Step
     public CartPage openCartPage() {
@@ -74,7 +76,7 @@ public class CartPage extends SelenidePage {
         };
     }
 
-    public void verifySubTotalPricePerProduct() {
+    public CartPage verifySubTotalPricePerProduct() {
         List<ProductItem> addedToCartProducts = getAllAddedToCartProductsWithCountAndSubtotal();
 
         for (ProductItem addedToCartProduct : addedToCartProducts) {
@@ -82,9 +84,11 @@ public class CartPage extends SelenidePage {
             double actualSubtotalPrice = addedToCartProduct.getItemSubtotal().getSubtotalPrice();
             Assertions.assertEquals(expectedSubtotalPrice, actualSubtotalPrice);
         }
+
+        return this;
     }
 
-    public void verifySubtotalPriceForCart() {
+    public CartPage verifySubtotalPriceForCart() {
         List<ProductItem> addedToCartProducts = getAllAddedToCartProductsWithCountAndSubtotal();
 
         double addedProductsSubtotalSum = addedToCartProducts.stream()
@@ -93,24 +97,26 @@ public class CartPage extends SelenidePage {
                 .mapToDouble(ProductItem.ItemSubtotal::getSubtotalPrice)
                 .sum();
 
-        double addedProductsSubtotalSumFormatted = (int)(addedProductsSubtotalSum * 100) / 100.0;
+        double addedProductsSubtotalSumFormatted = (int) (addedProductsSubtotalSum * 100) / 100.0;
 
         double actualCartSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
 
         Assertions.assertEquals(addedProductsSubtotalSumFormatted, actualCartSubtotal);
+
+        return this;
     }
 
-    public void increaseLowestPricedProductCountByOne(int productsToIncrease) {
+    public CartPage increaseLowestPricedProductCountByOne(int productsToIncrease) {
         List<ProductItem> addedProducts = getAllAddedToCartProducts();
         List<ProductItem> lowestPricedProducts = getLowestPricedItems(addedProducts, productsToIncrease);
 
         for (ProductItem lowestPricedProduct : lowestPricedProducts) {
             clickIncrementButtonForProduct(lowestPricedProduct.getItemId());
         }
-
+        return this;
     }
 
-    public void deleteHighestPricedProduct(int productsToDelete) {
+    public CartPage deleteHighestPricedProduct(int productsToDelete) {
         getAddedToCartItem().scrollIntoView("{behavior: \"smooth\"}");
         getAddedToCartItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
         getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
@@ -122,6 +128,13 @@ public class CartPage extends SelenidePage {
             getProductRemoveButton().shouldBe(Condition.visible, Duration.ofMillis(5000));
             clickDeleteButtonForProduct(highestPricedProduct.getItemId());
         }
+
+        return this;
+    }
+
+    public CartPage verifyCartPageUrl() {
+        browserActions.verifyUrlContains("/cart");
+        return this;
     }
 
     private List<ProductItem> getHighestPricedItems(List<ProductItem> itemsList, int desiredItemsAmount) {
@@ -232,11 +245,11 @@ public class CartPage extends SelenidePage {
             String actualProductName = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
             int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).getAttribute("value"));
             double initialProductSubtotal = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).getText().replaceAll("[^0-9.]", ""));
-            double initialProductSubtotalFormatted = (int)(initialProductSubtotal * 100) / 100.0;
+            double initialProductSubtotalFormatted = (int) (initialProductSubtotal * 100) / 100.0;
 
             if (actualProductName.contains(expectedProductName)) {
                 addedItem.$(ADDED_TO_CART_PRODUCT_INCREMENT_BUTTON).click();
-                addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).shouldHave(Condition.attribute("value", String.valueOf(itemCount+1)));
+                addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).shouldHave(Condition.attribute("value", String.valueOf(itemCount + 1)));
                 addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).shouldBe(Condition.not(Condition.text(String.valueOf("€" + initialProductSubtotalFormatted))), Duration.ofMillis(5000));
                 break;
             }
@@ -258,7 +271,7 @@ public class CartPage extends SelenidePage {
         return $$(ADDED_TO_CART_PRODUCT_MAIN_BOX);
     }
 
-    private SelenideElement getCartSubtotal(){
+    private SelenideElement getCartSubtotal() {
         return $(CART_SUBTOTAL_PRICE);
     }
 
