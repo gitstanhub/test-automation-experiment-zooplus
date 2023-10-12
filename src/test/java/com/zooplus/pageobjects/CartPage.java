@@ -1,10 +1,8 @@
 package com.zooplus.pageobjects;
 
-import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.Selenide;
-import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.*;
 import com.zooplus.constants.commons.PriceSortingTypes;
+import com.zooplus.constants.commons.ShippingCountries;
 import com.zooplus.models.ProductItem;
 import com.zooplus.pageobjects.base.SelenidePage;
 import com.zooplus.pageobjects.commons.CookiesPopup;
@@ -55,20 +53,19 @@ public class CartPage extends SelenidePage {
 
     @Step
     public CartPage addProductFromBottomRecommendations(int productsToAdd) {
+        getProductRemoveButton().shouldBe(Condition.visible, Duration.ofMillis(5000));
         getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
         getCarousel(ACTIVE_CART_SECOND_RECOMMENDATION_CAROUSEL_TITLE).scrollIntoView("{behavior: \"smooth\"}");
         getCarousel(ACTIVE_CART_SECOND_RECOMMENDATION_CAROUSEL_TITLE).shouldBe(Condition.visible, Duration.ofMillis(5000));
 
         for (int i = 0; i <= productsToAdd; i++) {
-            getProductRemoveButton().shouldBe(Condition.visible, Duration.ofMillis(5000));
             addFirstProductFromCarouselToCart(ACTIVE_CART_SECOND_RECOMMENDATION_CAROUSEL_TITLE);
         }
         return this;
     }
 
-    public List<ProductItem> getItemsFromEmptyCartCarousel(int desiredItemsAmount, PriceSortingTypes sortBy) {
-
-        List<ProductItem> carouselWithItems = getAllRecommendationCarouselsWithSortedItems().get(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE);
+    private List<ProductItem> getItemsFromRecommendationCarousel(String carouselTitle, int desiredItemsAmount, PriceSortingTypes sortBy) {
+        List<ProductItem> carouselWithItems = getAllRecommendationCarouselsWithSortedItems().get(carouselTitle);
 
         return switch (sortBy) {
             case HIGHEST -> getHighestPricedItems(carouselWithItems, desiredItemsAmount);
@@ -89,6 +86,8 @@ public class CartPage extends SelenidePage {
     }
 
     public CartPage verifySubtotalPriceForCart() {
+        flowOverTheCartItems();
+
         List<ProductItem> addedToCartProducts = getAllAddedToCartProductsWithCountAndSubtotal();
 
         double addedProductsSubtotalSum = addedToCartProducts.stream()
@@ -97,12 +96,28 @@ public class CartPage extends SelenidePage {
                 .mapToDouble(ProductItem.ItemSubtotal::getSubtotalPrice)
                 .sum();
 
+        System.out.println("Debug 777666: " + addedProductsSubtotalSum);
+
         double addedProductsSubtotalSumFormatted = (int) (addedProductsSubtotalSum * 100) / 100.0;
 
         double actualCartSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
 
         Assertions.assertEquals(addedProductsSubtotalSumFormatted, actualCartSubtotal);
 
+        return this;
+    }
+
+    public CartPage verifyTotalPriceForCart() {
+        double actualCartSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
+        double actualCartTotal = Double.parseDouble(getCartTotalPrice().getText().replaceAll("[^0-9.]", ""));
+        String actualShippingFee = getShippingFeeElement().getText();
+
+        if (!actualShippingFee.equals(ShippingCountries.freeShippingFee)) {
+            double actualShippingFeeFormatted = Double.parseDouble(actualShippingFee.replaceAll("[^0-9.]", ""));
+            Assertions.assertEquals(actualShippingFeeFormatted + actualCartSubtotal, actualCartTotal);
+        } else {
+            Assertions.assertEquals(actualCartSubtotal, actualCartTotal);
+        }
         return this;
     }
 
@@ -137,6 +152,91 @@ public class CartPage extends SelenidePage {
         return this;
     }
 
+    public CartPage selectShippingCountry(String countryName) {
+        getSelectedShippingCountryElement().click();
+        getShippingCountryDropdownButton().click();
+        $$(CART_SHIPPING_COUNTRY_DROPDOWN_LIST_ITEM).findBy(Condition.text(countryName)).click();
+        getShippingCountrySubmitButton().click();
+
+        getSelectedShippingCountryElement().shouldHave(Condition.text(countryName));
+
+        return this;
+    }
+
+    public CartPage selectShippingCountry(String countryName, String postCode) {
+        getSelectedShippingCountryElement().click();
+        getShippingCountryDropdownButton().click();
+        $$(CART_SHIPPING_COUNTRY_DROPDOWN_LIST_ITEM).findBy(Condition.text(countryName)).click();
+        getShippingCountryPostcodeField().setValue(String.valueOf(postCode));
+        getShippingCountrySubmitButton().click();
+
+        getSelectedShippingCountryElement().shouldHave(Condition.text(countryName));
+
+        return this;
+    }
+
+    public CartPage verifyShippingFee(double expectedShippingFee) {
+        String actualShippingFee = getShippingFeeElement().getText();
+        double actualShippingFeeFormatted = Double.parseDouble(actualShippingFee.replaceAll("[^0-9.]", ""));
+
+        Assertions.assertEquals(expectedShippingFee, actualShippingFeeFormatted);
+
+        return this;
+    }
+
+    public CartPage verifyShippingFee(String expectedShippingFee) {
+        String actualShippingFee = getShippingFeeElement().getText();
+
+        Assertions.assertEquals(expectedShippingFee, actualShippingFee);
+
+        return this;
+    }
+
+    public CartPage addProductBelowPrice(double priceCap) {
+        getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
+
+        boolean isProductFound = false;
+
+        int visibleItemsPerSlide = getAllRecommendationCarouselsWithSortedItems().get(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE).size();
+        int totalAmountOfItemsInCarousel = Integer.parseInt(getRecommendationCarouselItemWrapper().getAttribute("aria-label").split(" ")[2]);
+        double totalAmountOfSlidesInCarousel = (double) totalAmountOfItemsInCarousel / visibleItemsPerSlide;
+
+        System.out.println("DEBUGER HERE ###: " + visibleItemsPerSlide + " " + totalAmountOfItemsInCarousel + " " + totalAmountOfSlidesInCarousel);
+
+        for(int i = 0; i < totalAmountOfSlidesInCarousel - 1; i++) {
+            List<ProductItem> carouselItems = getItemsFromRecommendationCarousel(
+                    EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE, 1, PriceSortingTypes.LOWEST);
+
+            ProductItem fetchedItem = carouselItems.get(0);
+
+            if (fetchedItem.getItemPrice() < priceCap) {
+                getCarousel(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE).$(String.format(RECOMMENDATIONS_CAROUSEL_SPECIFIC_ITEM_ADD_BUTTON, fetchedItem.getItemId())).click();
+                isProductFound = true;
+                break;
+            } else {
+                getNextSlideButton().click();
+                Selenide.sleep(5000);
+//                getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
+            }
+        }
+
+        if (!isProductFound) {
+            throw new IllegalArgumentException("No element found below the specified price");
+        }
+
+
+        //get items from first carousel
+        //pick item that is less than 50 eur
+        //if not found then click next slide and try a couple more times
+        //add a product that fits the below 50 eur to cart
+        //select shipping country germany
+        //until total is equal or more than 50 eur add new products
+        //then verify that shipping fee
+
+        return this;
+    }
+
+
     private List<ProductItem> getHighestPricedItems(List<ProductItem> itemsList, int desiredItemsAmount) {
         return itemsList.stream()
                 .sorted(Comparator.comparing(ProductItem::getItemPrice).reversed())
@@ -161,7 +261,7 @@ public class CartPage extends SelenidePage {
             ElementsCollection rawCarouselItems = elementActions.findAllCarouselItems(carousel, RECOMMENDATIONS_CAROUSEL_ITEM);
             ElementsCollection visibleCarouselItems = rawCarouselItems.filter(Condition.visible);
 
-            System.out.println("DEBUG HERE: " + visibleCarouselItems.stream().toList().size());
+//            System.out.println("DEBUG HERE: " + visibleCarouselItems.stream().toList().size());
             List<ProductItem> productItems = new ArrayList<>();
             for (SelenideElement visibleCarouselItem : visibleCarouselItems) {
                 String itemId = visibleCarouselItem.$(RECOMMENDATIONS_CAROUSEL_ITEM_LINK).getAttribute("id");
@@ -180,6 +280,8 @@ public class CartPage extends SelenidePage {
     }
 
     public List<ProductItem> getAllAddedToCartProductsWithCountAndSubtotal() {
+        flowOverTheCartItems();
+
         List<ProductItem> addedToCartProducts = new ArrayList<>();
 
         ElementsCollection addedItems = getAllAddedToCartProductsContainers();
@@ -224,7 +326,9 @@ public class CartPage extends SelenidePage {
     }
 
     private void addFirstProductFromCarouselToCart(String carouselTitle) {
-        getCarousel(carouselTitle).$$("[data-testid='recommendation-item'] button").first().click();
+        SelenideElement firstCarouselItemButton = getCarousel(carouselTitle).$$(RECOMMENDATIONS_CAROUSEL_ITEM_ADD_BUTTON).first();
+        firstCarouselItemButton.click();
+        getCartSubtotal().shouldBe(Condition.partialText("€"));
     }
 
     private SelenideElement getCarousel(String carouselTitle) {
@@ -268,6 +372,8 @@ public class CartPage extends SelenidePage {
     }
 
     private ElementsCollection getAllAddedToCartProductsContainers() {
+        flowOverTheCartItems();
+
         return $$(ADDED_TO_CART_PRODUCT_MAIN_BOX);
     }
 
@@ -277,6 +383,10 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getRecommendationCarouselItem() {
         return $(RECOMMENDATIONS_CAROUSEL_ITEM);
+    }
+
+    private SelenideElement getRecommendationCarouselItemWrapper() {
+        return $(RECOMMENDATIONS_CAROUSEL_ITEM_WRAPPER);
     }
 
     private SelenideElement getCartSummarySection() {
@@ -293,5 +403,40 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getProductIncrementButton() {
         return $(ADDED_TO_CART_PRODUCT_INCREMENT_BUTTON);
+    }
+
+    private void flowOverTheCartItems() {
+        $$(ADDED_TO_CART_PRODUCT_MAIN_BOX).last().scrollIntoView("{behavior: \"smooth\"}");
+        $$(ADDED_TO_CART_PRODUCT_MAIN_BOX).first().scrollIntoView("{behavior: \"smooth\"}");
+        getAddedToCartItem().scrollIntoView("{behavior: \"smooth\"}");
+        getAddedToCartItem().shouldBe(Condition.visible);
+    }
+
+    private SelenideElement getShippingFeeElement() {
+        return $(CART_SHIPPING_FEE);
+    }
+
+    private SelenideElement getSelectedShippingCountryElement() {
+        return $(CART_SHIPPING_COUNTRY_SELECTED);
+    }
+
+    private SelenideElement getShippingCountryDropdownButton() {
+        return $(CART_SHIPPING_COUNTRY_DROPDOWN_BUTTON);
+    }
+
+    private SelenideElement getShippingCountryPostcodeField() {
+        return $(CART_SHIPPING_COUNTRY_POSTCODE_FIELD);
+    }
+
+    private SelenideElement getShippingCountrySubmitButton() {
+        return $(CART_SHIPPING_COUNTRY_UPDATE_BUTTON);
+    }
+
+    private SelenideElement getCartTotalPrice() {
+        return $(CART_TOTAL_PRICE);
+    }
+
+    private SelenideElement getNextSlideButton() {
+        return $(RECOMMENDATION_CAROUSEL_NEXT_SLIDE_BUTTON);
     }
 }

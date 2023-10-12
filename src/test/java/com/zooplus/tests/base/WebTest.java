@@ -8,8 +8,8 @@ public class WebTest {
 
     protected CartPage cartPage = new CartPage();
 
-    @BeforeAll
-    static void setUp() {
-        Configuration.timeout = 5000;
-    }
+//    @BeforeAll
+//    static void setUp() {
+//        Configuration.timeout = 5000;
+//    }
 }

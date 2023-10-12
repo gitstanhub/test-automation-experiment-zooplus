@@ -14,10 +14,13 @@ public class CartPageLocators {
     public static final String CART_SUBTOTAL_PRICE = "div[id='cartSummary'] p[data-zta='overviewSubTotalValue']";
     public static final String CART_SHIPPING_FEE = "div[id='cartSummary'] p[data-zta='shippingCostValueOverview']";
     public static final String CART_TOTAL_PRICE = "div[id='cartSummary'] div [data-zta='total__price__value']";
-    public static final String CART_SHIPPING_COUNTRY_BUTTON = "a[data-zta='shippingCountryName']";
+    public static final String CART_SHIPPING_COUNTRY_SELECTED = "a[data-zta='shippingCountryName']";
+    public static final String CART_SHIPPING_COUNTRY_DROPDOWN_BUTTON = "button[data-zta='dropdownMenuTriggerButton']";
+    public static final String CART_SHIPPING_COUNTRY_DROPDOWN_LIST_ITEM = "div[data-zta='dropdownMenuMenu'] ul button li p";
+    public static final String CART_SHIPPING_COUNTRY_POSTCODE_FIELD = "div[data-zta='shippingCostZipcode'] input";
+    public static final String CART_SHIPPING_COUNTRY_UPDATE_BUTTON = "button[data-zta='shippingCostPopoverAction']";
     public static final String CART_COUPON_CODE_BUTTON = "a[data-zta='enterCouponBtn']";
     public static final String CART_COUPON_CODE_FIELD = "input[data-zta='couponCode']";
     public static final String CART_COUPON_REDEEM_BUTTON = "button[data-zta='redeemCode']";
     public static final String CART_PROCEED_BUTTON = "button[data-zta='gotoPreviewBottom']";
-
 }
