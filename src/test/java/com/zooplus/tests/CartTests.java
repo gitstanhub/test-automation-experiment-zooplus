@@ -11,7 +11,7 @@ public class CartTests extends WebTest {
 
     @Test
     @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
-    void multipleProductsCanBeAddedToCart() {
+    void draftTest() {
         cartPage.openCartPage();
         browserActions.verifyUrlContains("/cart");
         System.out.println("test");
@@ -19,8 +19,17 @@ public class CartTests extends WebTest {
         cartPage.addProductFromEmptyCartRecommendations();
         cartPage.addProductFromTopRecommendations(3);
         cartPage.addProductFromBottomRecommendations(4);
-//        cartPage.getAllAddedToCartProducts();
+        System.out.println("test");
+        cartPage.deleteHighestPricedProduct(1);
         cartPage.increaseLowestPricedProductCountByOne(3);
+        cartPage.getAllAddedToCartProductsWithCountAndSubtotal();
+        cartPage.getAllAddedToCartProductsWithCountAndSubtotal();
+        cartPage.verifySubTotalPricePerProduct();
+        cartPage.verifySubTotalPricePerProduct();
+        cartPage.verifySubtotalPriceForCart();
+        cartPage.verifySubtotalPriceForCart();
+
+
         System.out.println("test");
 
 

@@ -1,15 +1,15 @@
 package com.zooplus.tests.base;
 
-import com.codeborne.selenide.Selenide;
+import com.codeborne.selenide.Configuration;
 import com.zooplus.pageobjects.CartPage;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 
 public class WebTest {
 
     protected CartPage cartPage = new CartPage();
 
-//    @AfterEach
-//    void tearDown() {
-//        Selenide.closeWebDriver();
-//    }
+    @BeforeAll
+    static void setUp() {
+        Configuration.timeout = 5000;
+    }
 }
