@@ -133,15 +133,46 @@ public class CartTests extends WebTest {
 
     @Test
     @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void canProceedWithOrderAboveMinimal() {
+        double minimalOrderPrice = 19.00;
+
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendations()
+                .addNewProductsUntilSubtotal(minimalOrderPrice)
+                .verifyProceedButtonIsEnabled();
+
+        cartPage
+                .verifyCartPageUrl();
+    }
+
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void cartCanBeCleared() {
+
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendations()
+                .deleteHighestPricedProduct(1)
+                .verifyEmptyCartMessageIsDisplayed();
+
+        cartPage
+                .verifyCartPageUrl();
+    }
+
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
     void lastRemovedProductCanBeRestored() {
 
         cartPage
                 .openCartPage()
                 .addProductFromEmptyCartRecommendations()
                 .deleteHighestPricedProduct(1)
-                .verifyEmptyCartMessageIsDisplayed()
                 .undoLastProductRemoval()
                 .verifyCartIsNotEmpty();
+
+        cartPage
+                .verifyCartPageUrl();
     }
 
     @Test
@@ -169,5 +200,8 @@ public class CartTests extends WebTest {
                 .clickCouponCodeButton()
                 .submitCouponCode(couponCode)
                 .verifyCouponCodeErrorMessage(couponCode);
+
+        cartPage
+                .verifyCartPageUrl();
     }
 }

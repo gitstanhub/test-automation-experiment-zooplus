@@ -102,7 +102,7 @@ public class CartPage extends SelenidePage {
 
         double actualCartSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
 
-        Assertions.assertEquals(addedProductsSubtotalSumFormatted, actualCartSubtotal);
+        Assertions.assertEquals(addedProductsSubtotalSumFormatted, actualCartSubtotal, 0.01);
 
         return this;
     }
@@ -279,6 +279,12 @@ public class CartPage extends SelenidePage {
 
     public CartPage verifyProceedButtonIsDisabled() {
         getCartProceedButton().shouldBe(Condition.disabled);
+
+        return this;
+    }
+
+    public CartPage verifyProceedButtonIsEnabled() {
+        getCartProceedButton().shouldBe(Condition.enabled);
 
         return this;
     }
