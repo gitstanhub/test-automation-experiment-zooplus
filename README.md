@@ -1,5 +1,10 @@
 ## Test automation project for Zooplus
 
+<p align="center">
+<br>
+  <img src="media/zooplus_logo.png" alt="spotify-logo" width="400">
+</p>
+
 ## Table of Contents
 - [Overview](#overview)
 - [Installation and Setup](#installation-and-setup)
