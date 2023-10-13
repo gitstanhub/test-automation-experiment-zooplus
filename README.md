@@ -18,6 +18,7 @@ It supports replacement of Sid cookie with custom value for personalisation of t
 * Java
 * Selenide
 * Gradle
+* JUnit 5
 * Allure
 
 ## Installation and Setup
