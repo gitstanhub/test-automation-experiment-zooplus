@@ -168,6 +168,17 @@ public class CartPage extends SelenidePage {
         return this;
     }
 
+    public CartPage verifyEmptyCartMessageIsDisplayed() {
+        getCartAlertMessage().shouldHave(Condition.text(CartMessage.LAST_PRODUCT_REMOVED_MESSAGE));
+        return this;
+    }
+
+    public CartPage verifyCartIsNotEmpty() {
+        Assertions.assertFalse(getAllAddedToCartProducts().isEmpty());
+
+        return this;
+    }
+
     public CartPage verifyCartPageUrl() {
         browserActions.verifyUrlContains("/cart");
         return this;
@@ -198,6 +209,12 @@ public class CartPage extends SelenidePage {
         getShippingCountrySubmitButton().click();
 
         getSelectedShippingCountryElement().shouldHave(Condition.text(countryName));
+
+        return this;
+    }
+
+    public CartPage undoLastProductRemoval() {
+        getUndoLastProductRemovalButton().click();
 
         return this;
     }
@@ -514,5 +531,13 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getCartProceedButton() {
         return $(CART_PROCEED_BUTTON);
+    }
+
+    private SelenideElement getCartAlertMessage() {
+        return $(CART_ALERT_MESSAGE);
+    }
+
+    private SelenideElement getUndoLastProductRemovalButton() {
+        return $(UNDO_LAST_PRODUCT_REMOVAL_BUTTON);
     }
 }

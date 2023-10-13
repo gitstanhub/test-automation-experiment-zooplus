@@ -24,4 +24,6 @@ public class CartPageLocators {
     public static final String CART_COUPON_REDEEM_BUTTON = "button[data-zta='redeemCode']";
     public static final String CART_PROCEED_BUTTON = "button[data-zta='gotoPreviewBottom']";
     public static final String CART_ERROR_MESSAGE = "div[data-zta='cartMessage-error'] div[data-zta='alertText'] p";
+    public static final String CART_ALERT_MESSAGE = "div[data-zta='alertText'] p";
+    public static final String UNDO_LAST_PRODUCT_REMOVAL_BUTTON = "div[data-zta='alertText'] a[data-zta='reAddArticleBtn']";
 }

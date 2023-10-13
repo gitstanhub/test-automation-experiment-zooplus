@@ -133,6 +133,19 @@ public class CartTests extends WebTest {
 
     @Test
     @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void lastRemovedProductCanBeRestored() {
+
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendations()
+                .deleteHighestPricedProduct(1)
+                .verifyEmptyCartMessageIsDisplayed()
+                .undoLastProductRemoval()
+                .verifyCartIsNotEmpty();
+    }
+
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
     void cannotAddProductItemsAboveLimit() {
 
         cartPage
@@ -141,6 +154,7 @@ public class CartTests extends WebTest {
                 .updateLowestPricedProductCountByNumber(1, 20)
                 .verifyIncreaseProductCountButtonIsDisabled();
 
-        System.out.println("test");
+        cartPage
+                .verifyCartPageUrl();
     }
 }
