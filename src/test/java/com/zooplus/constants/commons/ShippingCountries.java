@@ -15,7 +15,7 @@ public enum ShippingCountries {
 
     private final double shippingFee;
 
-    public static final String freeShippingFee = "FREE";
+    public static final String freeShippingFee = "Free";
 
     ShippingCountries(String countryName, double shippingFee) {
         this.countryName = countryName;

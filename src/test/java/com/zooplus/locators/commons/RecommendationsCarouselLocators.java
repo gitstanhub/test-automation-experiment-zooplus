@@ -11,4 +11,5 @@ public class RecommendationsCarouselLocators {
     public static final String RECOMMENDATIONS_CAROUSEL_ITEM_ADD_BUTTON = "[data-testid='recommendation-item'] button";
     public static final String RECOMMENDATIONS_CAROUSEL_SPECIFIC_ITEM_ADD_BUTTON = "a[title='%s'] ~ button";
     public static final String RECOMMENDATION_CAROUSEL_NEXT_SLIDE_BUTTON = "button[aria-label='Next slide']";
+    public static final String RECOMMENDATION_CAROUSEL_PREVIOUS_SLIDE_BUTTON = "button[aria-label='Previous slide']";
 }

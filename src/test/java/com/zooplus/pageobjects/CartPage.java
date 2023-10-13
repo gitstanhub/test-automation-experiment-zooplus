@@ -22,8 +22,6 @@ import static com.zooplus.locators.commons.RecommendationsCarouselLocators.*;
 
 public class CartPage extends SelenidePage {
 
-    //add method that will add desired amount of products from a recommended section
-
     CookiesPopup cookiesPopup = new CookiesPopup();
     BrowserActions browserActions = new BrowserActions();
 
@@ -131,6 +129,18 @@ public class CartPage extends SelenidePage {
         return this;
     }
 
+    public CartPage addNewProductsUntilSubtotal(double desiredSubtotal) {
+        double currentSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
+
+        while (currentSubtotal < desiredSubtotal) {
+            addProductFromTopRecommendations(1);
+            getCartSubtotal().shouldBe(Condition.partialText("€"));
+            currentSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
+            System.out.println("Debug 000: " + currentSubtotal);
+        }
+        return this;
+    }
+
     public CartPage deleteHighestPricedProduct(int productsToDelete) {
         getAddedToCartItem().scrollIntoView("{behavior: \"smooth\"}");
         getAddedToCartItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
@@ -203,7 +213,7 @@ public class CartPage extends SelenidePage {
 
         System.out.println("DEBUGER HERE ###: " + visibleItemsPerSlide + " " + totalAmountOfItemsInCarousel + " " + totalAmountOfSlidesInCarousel);
 
-        for(int i = 0; i < totalAmountOfSlidesInCarousel - 1; i++) {
+        for (int i = 0; i < totalAmountOfSlidesInCarousel - 1; i++) {
             List<ProductItem> carouselItems = getItemsFromRecommendationCarousel(
                     EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE, 1, PriceSortingTypes.LOWEST);
 
@@ -215,24 +225,13 @@ public class CartPage extends SelenidePage {
                 break;
             } else {
                 getNextSlideButton().click();
-                Selenide.sleep(5000);
-//                getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
+                getCarousel(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE).$(RECOMMENDATION_CAROUSEL_PREVIOUS_SLIDE_BUTTON).shouldBe(Condition.visible, Duration.ofMillis(5000));
             }
         }
 
         if (!isProductFound) {
             throw new IllegalArgumentException("No element found below the specified price");
         }
-
-
-        //get items from first carousel
-        //pick item that is less than 50 eur
-        //if not found then click next slide and try a couple more times
-        //add a product that fits the below 50 eur to cart
-        //select shipping country germany
-        //until total is equal or more than 50 eur add new products
-        //then verify that shipping fee
-
         return this;
     }
 
@@ -438,5 +437,9 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getNextSlideButton() {
         return $(RECOMMENDATION_CAROUSEL_NEXT_SLIDE_BUTTON);
+    }
+
+    private SelenideElement getPreviousSlideButton() {
+        return $(RECOMMENDATION_CAROUSEL_PREVIOUS_SLIDE_BUTTON);
     }
 }

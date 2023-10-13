@@ -82,10 +82,17 @@ public class CartTests extends WebTest {
     @Test
     @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
     void freeShippingCanBeApplied() {
+        String shippingCountryName = ShippingCountries.GERMANY.getCountryName();
+        double initialShippingFee = ShippingCountries.GERMANY.getShippingFee();
+        String updatedShippingFee = ShippingCountries.freeShippingFee;
+        double freeShippingCap = 50.00;
+
         cartPage
                 .openCartPage()
-                .addProductBelowPrice(0.01);
-        System.out.println("test");
-
+                .addProductBelowPrice(freeShippingCap)
+                .selectShippingCountry(shippingCountryName)
+                .verifyShippingFee(initialShippingFee)
+                .addNewProductsUntilSubtotal(freeShippingCap)
+                .verifyShippingFee(updatedShippingFee);
     }
 }
