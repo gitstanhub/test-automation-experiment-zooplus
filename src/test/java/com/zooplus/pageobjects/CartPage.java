@@ -1,13 +1,13 @@
 package com.zooplus.pageobjects;
 
-import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.Selenide;
-import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.*;
+import com.zooplus.constants.CartMessage;
 import com.zooplus.constants.commons.PriceSortingTypes;
+import com.zooplus.constants.commons.ShippingCountries;
 import com.zooplus.models.ProductItem;
 import com.zooplus.pageobjects.base.SelenidePage;
 import com.zooplus.pageobjects.commons.CookiesPopup;
+import com.zooplus.utils.BrowserActions;
 import io.qameta.allure.Step;
 import org.junit.jupiter.api.Assertions;
 
@@ -17,15 +17,15 @@ import java.util.stream.Collectors;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
+import static com.zooplus.constants.CartMessage.INVALID_COUPON_CODE_ERROR_MESSAGE;
 import static com.zooplus.constants.commons.RecommendationsCarouselConstants.*;
 import static com.zooplus.locators.CartPageLocators.*;
 import static com.zooplus.locators.commons.RecommendationsCarouselLocators.*;
 
 public class CartPage extends SelenidePage {
 
-    //add method that will add desired amount of products from a recommended section
-
     CookiesPopup cookiesPopup = new CookiesPopup();
+    BrowserActions browserActions = new BrowserActions();
 
     @Step
     public CartPage openCartPage() {
@@ -53,20 +53,19 @@ public class CartPage extends SelenidePage {
 
     @Step
     public CartPage addProductFromBottomRecommendations(int productsToAdd) {
+        getProductRemoveButton().shouldBe(Condition.visible, Duration.ofMillis(5000));
         getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
         getCarousel(ACTIVE_CART_SECOND_RECOMMENDATION_CAROUSEL_TITLE).scrollIntoView("{behavior: \"smooth\"}");
         getCarousel(ACTIVE_CART_SECOND_RECOMMENDATION_CAROUSEL_TITLE).shouldBe(Condition.visible, Duration.ofMillis(5000));
 
         for (int i = 0; i <= productsToAdd; i++) {
-            getProductRemoveButton().shouldBe(Condition.visible, Duration.ofMillis(5000));
             addFirstProductFromCarouselToCart(ACTIVE_CART_SECOND_RECOMMENDATION_CAROUSEL_TITLE);
         }
         return this;
     }
 
-    public List<ProductItem> getItemsFromEmptyCartCarousel(int desiredItemsAmount, PriceSortingTypes sortBy) {
-
-        List<ProductItem> carouselWithItems = getAllRecommendationCarouselsWithSortedItems().get(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE);
+    private List<ProductItem> getItemsFromRecommendationCarousel(String carouselTitle, int desiredItemsAmount, PriceSortingTypes sortBy) {
+        List<ProductItem> carouselWithItems = getAllRecommendationCarouselsWithSortedItems().get(carouselTitle);
 
         return switch (sortBy) {
             case HIGHEST -> getHighestPricedItems(carouselWithItems, desiredItemsAmount);
@@ -74,7 +73,7 @@ public class CartPage extends SelenidePage {
         };
     }
 
-    public void verifySubTotalPricePerProduct() {
+    public CartPage verifySubTotalPricePerProduct() {
         List<ProductItem> addedToCartProducts = getAllAddedToCartProductsWithCountAndSubtotal();
 
         for (ProductItem addedToCartProduct : addedToCartProducts) {
@@ -82,9 +81,13 @@ public class CartPage extends SelenidePage {
             double actualSubtotalPrice = addedToCartProduct.getItemSubtotal().getSubtotalPrice();
             Assertions.assertEquals(expectedSubtotalPrice, actualSubtotalPrice);
         }
+
+        return this;
     }
 
-    public void verifySubtotalPriceForCart() {
+    public CartPage verifySubtotalPriceForCart() {
+        flowOverTheCartItems();
+
         List<ProductItem> addedToCartProducts = getAllAddedToCartProductsWithCountAndSubtotal();
 
         double addedProductsSubtotalSum = addedToCartProducts.stream()
@@ -93,24 +96,64 @@ public class CartPage extends SelenidePage {
                 .mapToDouble(ProductItem.ItemSubtotal::getSubtotalPrice)
                 .sum();
 
-        double addedProductsSubtotalSumFormatted = (int)(addedProductsSubtotalSum * 100) / 100.0;
+        System.out.println("Debug 777666: " + addedProductsSubtotalSum);
+
+        double addedProductsSubtotalSumFormatted = (int) (addedProductsSubtotalSum * 100) / 100.0;
 
         double actualCartSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
 
-        Assertions.assertEquals(addedProductsSubtotalSumFormatted, actualCartSubtotal);
+        Assertions.assertEquals(addedProductsSubtotalSumFormatted, actualCartSubtotal, 0.01);
+
+        return this;
     }
 
-    public void increaseLowestPricedProductCountByOne(int productsToIncrease) {
+    public CartPage verifyTotalPriceForCart() {
+        double actualCartSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
+        double actualCartTotal = Double.parseDouble(getCartTotalPrice().getText().replaceAll("[^0-9.]", ""));
+        String actualShippingFee = getShippingFeeElement().getText();
+
+        if (!actualShippingFee.equals(ShippingCountries.freeShippingFee)) {
+            double actualShippingFeeFormatted = Double.parseDouble(actualShippingFee.replaceAll("[^0-9.]", ""));
+            Assertions.assertEquals(actualShippingFeeFormatted + actualCartSubtotal, actualCartTotal);
+        } else {
+            Assertions.assertEquals(actualCartSubtotal, actualCartTotal);
+        }
+        return this;
+    }
+
+    public CartPage increaseLowestPricedProductCountByOne(int productsToIncrease) {
         List<ProductItem> addedProducts = getAllAddedToCartProducts();
         List<ProductItem> lowestPricedProducts = getLowestPricedItems(addedProducts, productsToIncrease);
 
         for (ProductItem lowestPricedProduct : lowestPricedProducts) {
             clickIncrementButtonForProduct(lowestPricedProduct.getItemId());
         }
-
+        return this;
     }
 
-    public void deleteHighestPricedProduct(int productsToDelete) {
+    public CartPage updateLowestPricedProductCountByNumber(int productsToIncrease, int desiredNumber) {
+        List<ProductItem> addedProducts = getAllAddedToCartProducts();
+        List<ProductItem> lowestPricedProducts = getLowestPricedItems(addedProducts, productsToIncrease);
+
+        for (ProductItem lowestPricedProduct : lowestPricedProducts) {
+            updateItemAmountForProduct(lowestPricedProduct.getItemId(), desiredNumber);
+        }
+        return this;
+    }
+
+    public CartPage addNewProductsUntilSubtotal(double desiredSubtotal) {
+        double currentSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
+
+        while (currentSubtotal < desiredSubtotal) {
+            addProductFromTopRecommendations(1);
+            getCartSubtotal().shouldBe(Condition.partialText("€"));
+            currentSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
+            System.out.println("Debug 000: " + currentSubtotal);
+        }
+        return this;
+    }
+
+    public CartPage deleteHighestPricedProduct(int productsToDelete) {
         getAddedToCartItem().scrollIntoView("{behavior: \"smooth\"}");
         getAddedToCartItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
         getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
@@ -122,7 +165,173 @@ public class CartPage extends SelenidePage {
             getProductRemoveButton().shouldBe(Condition.visible, Duration.ofMillis(5000));
             clickDeleteButtonForProduct(highestPricedProduct.getItemId());
         }
+
+        return this;
     }
+
+    public CartPage verifyEmptyCartMessageIsDisplayed() {
+        getCartAlertMessage().shouldHave(Condition.text(CartMessage.LAST_PRODUCT_REMOVED_MESSAGE));
+        return this;
+    }
+
+    public CartPage verifyCartIsNotEmpty() {
+        Assertions.assertFalse(getAllAddedToCartProducts().isEmpty());
+
+        return this;
+    }
+
+    public CartPage verifyCartPageUrl() {
+        browserActions.verifyUrlContains("/cart");
+        return this;
+    }
+
+    public CartPage verifyIncreaseProductCountButtonIsDisabled() {
+        getProductIncrementButton().shouldBe(Condition.disabled);
+
+        return this;
+    }
+
+    public CartPage selectShippingCountry(String countryName) {
+        getSelectedShippingCountryElement().click();
+        getShippingCountryDropdownButton().click();
+        $$(CART_SHIPPING_COUNTRY_DROPDOWN_LIST_ITEM).findBy(Condition.text(countryName)).click();
+        getShippingCountrySubmitButton().click();
+
+        getSelectedShippingCountryElement().shouldHave(Condition.text(countryName));
+
+        return this;
+    }
+
+    public CartPage selectShippingCountry(String countryName, String postCode) {
+        getSelectedShippingCountryElement().click();
+        getShippingCountryDropdownButton().click();
+        $$(CART_SHIPPING_COUNTRY_DROPDOWN_LIST_ITEM).findBy(Condition.text(countryName)).click();
+        getShippingCountryPostcodeField().setValue(String.valueOf(postCode));
+        getShippingCountrySubmitButton().click();
+
+        getSelectedShippingCountryElement().shouldHave(Condition.text(countryName));
+
+        return this;
+    }
+
+    public CartPage clickCouponCodeButton() {
+        getCouponCodeButton().click();
+
+        return this;
+    }
+
+    public CartPage submitCouponCode(String couponCode) {
+        getCouponCodeField().setValue(couponCode);
+        getSubmitCouponButton().click();
+
+        return this;
+    }
+
+    public CartPage undoLastProductRemoval() {
+        getUndoLastProductRemovalButton().click();
+
+        return this;
+    }
+
+    public CartPage verifyShippingFee(double expectedShippingFee) {
+        String actualShippingFee = getShippingFeeElement().getText();
+        double actualShippingFeeFormatted = Double.parseDouble(actualShippingFee.replaceAll("[^0-9.]", ""));
+
+        Assertions.assertEquals(expectedShippingFee, actualShippingFeeFormatted);
+
+        return this;
+    }
+
+    public CartPage verifyShippingFee(String expectedShippingFee) {
+        String actualShippingFee = getShippingFeeElement().getText();
+
+        Assertions.assertEquals(expectedShippingFee, actualShippingFee);
+
+        return this;
+    }
+
+    public CartPage verifyShippingCountry(String expectedCountry, String expectedPostcode) {
+        String actualShippingCountryAndPostCode = getSelectedShippingCountryElement().getText();
+
+        Assertions.assertTrue(actualShippingCountryAndPostCode.contains(expectedCountry));
+        Assertions.assertTrue(actualShippingCountryAndPostCode.contains(expectedPostcode));
+
+        return this;
+    }
+
+    public CartPage verifyShippingCountry(String expectedCountry) {
+        String actualShippingCountryAndPostCode = getSelectedShippingCountryElement().getText();
+
+        Assertions.assertTrue(actualShippingCountryAndPostCode.contains(expectedCountry));
+
+        return this;
+    }
+
+    public CartPage verifyMinimumOrderError(double expectedMinimumOrder) {
+        String actualCartErrorMessage = getCartErrorMessage().getText();
+        String expectedMinimumOrderFormatted = String.format("%.2f", expectedMinimumOrder).replace(',', '.');
+        String expectedCartErrorMessage = String.format(CartMessage.MINIMAL_ORDER_VALUE_MESSAGE, expectedMinimumOrderFormatted);
+
+        Assertions.assertEquals(expectedCartErrorMessage, actualCartErrorMessage);
+
+        return this;
+    }
+
+    public CartPage verifyProceedButtonIsDisabled() {
+        getCartProceedButton().shouldBe(Condition.disabled);
+
+        return this;
+    }
+
+    public CartPage verifyProceedButtonIsEnabled() {
+        getCartProceedButton().shouldBe(Condition.enabled);
+
+        return this;
+    }
+
+    public CartPage verifyCouponCodeErrorMessage(String couponCode) {
+        String actualErrorMessage = getCartCouponInlineMessage().getText();
+        String expectedErrorMessage = String.format(INVALID_COUPON_CODE_ERROR_MESSAGE, couponCode);
+
+        Assertions.assertEquals(expectedErrorMessage, actualErrorMessage);
+
+        return this;
+    }
+
+
+    public CartPage addProductFromEmptyCartRecommendationsBelowPrice(double priceCap) {
+        getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
+
+        boolean isProductFound = false;
+
+        int visibleItemsPerSlide = getAllRecommendationCarouselsWithSortedItems().get(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE).size();
+        int totalAmountOfItemsInCarousel = Integer.parseInt(getRecommendationCarouselItemWrapper().getAttribute("aria-label").split(" ")[2]);
+        double totalAmountOfSlidesInCarousel = (double) totalAmountOfItemsInCarousel / visibleItemsPerSlide;
+
+        System.out.println("DEBUGER HERE ###: " + visibleItemsPerSlide + " " + totalAmountOfItemsInCarousel + " " + totalAmountOfSlidesInCarousel);
+
+        for (int i = 0; i < totalAmountOfSlidesInCarousel - 1; i++) {
+            List<ProductItem> carouselItems = getItemsFromRecommendationCarousel(
+                    EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE, 1, PriceSortingTypes.LOWEST);
+
+            ProductItem fetchedItem = carouselItems.get(0);
+
+            if (fetchedItem.getItemPrice() < priceCap) {
+                getCarousel(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE).$(String.format(RECOMMENDATIONS_CAROUSEL_SPECIFIC_ITEM_ADD_BUTTON, fetchedItem.getItemId())).click();
+                isProductFound = true;
+                break;
+            } else {
+                getNextSlideButton().click();
+                getCarousel(EMPTY_CART_RECOMMENDATION_CAROUSEL_TITLE).$(RECOMMENDATION_CAROUSEL_PREVIOUS_SLIDE_BUTTON).shouldBe(Condition.visible, Duration.ofMillis(5000));
+            }
+        }
+
+        if (!isProductFound) {
+            throw new IllegalArgumentException("No element found below the specified price");
+        }
+        return this;
+    }
+
 
     private List<ProductItem> getHighestPricedItems(List<ProductItem> itemsList, int desiredItemsAmount) {
         return itemsList.stream()
@@ -148,7 +357,7 @@ public class CartPage extends SelenidePage {
             ElementsCollection rawCarouselItems = elementActions.findAllCarouselItems(carousel, RECOMMENDATIONS_CAROUSEL_ITEM);
             ElementsCollection visibleCarouselItems = rawCarouselItems.filter(Condition.visible);
 
-            System.out.println("DEBUG HERE: " + visibleCarouselItems.stream().toList().size());
+//            System.out.println("DEBUG HERE: " + visibleCarouselItems.stream().toList().size());
             List<ProductItem> productItems = new ArrayList<>();
             for (SelenideElement visibleCarouselItem : visibleCarouselItems) {
                 String itemId = visibleCarouselItem.$(RECOMMENDATIONS_CAROUSEL_ITEM_LINK).getAttribute("id");
@@ -167,6 +376,8 @@ public class CartPage extends SelenidePage {
     }
 
     public List<ProductItem> getAllAddedToCartProductsWithCountAndSubtotal() {
+        flowOverTheCartItems();
+
         List<ProductItem> addedToCartProducts = new ArrayList<>();
 
         ElementsCollection addedItems = getAllAddedToCartProductsContainers();
@@ -175,7 +386,7 @@ public class CartPage extends SelenidePage {
             String itemId = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
             double itemPrice = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_PRICE).getText().replaceAll("[^0-9.]", ""));
 
-            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).getAttribute("value"));
+            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).getAttribute("value"));
             double subtotalPrice = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).getText().replaceAll("[^0-9.]", ""));
 
             ProductItem productItem = new ProductItem(itemId, itemPrice);
@@ -211,7 +422,9 @@ public class CartPage extends SelenidePage {
     }
 
     private void addFirstProductFromCarouselToCart(String carouselTitle) {
-        getCarousel(carouselTitle).$$("[data-testid='recommendation-item'] button").first().click();
+        SelenideElement firstCarouselItemButton = getCarousel(carouselTitle).$$(RECOMMENDATIONS_CAROUSEL_ITEM_ADD_BUTTON).first();
+        firstCarouselItemButton.click();
+        getCartSubtotal().shouldBe(Condition.partialText("€"));
     }
 
     private SelenideElement getCarousel(String carouselTitle) {
@@ -230,14 +443,28 @@ public class CartPage extends SelenidePage {
 
         for (SelenideElement addedItem : addedItems) {
             String actualProductName = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
-            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).getAttribute("value"));
+            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).getAttribute("value"));
             double initialProductSubtotal = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).getText().replaceAll("[^0-9.]", ""));
-            double initialProductSubtotalFormatted = (int)(initialProductSubtotal * 100) / 100.0;
+            double initialProductSubtotalFormatted = (int) (initialProductSubtotal * 100) / 100.0;
 
             if (actualProductName.contains(expectedProductName)) {
                 addedItem.$(ADDED_TO_CART_PRODUCT_INCREMENT_BUTTON).click();
-                addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).shouldHave(Condition.attribute("value", String.valueOf(itemCount+1)));
+                addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).shouldHave(Condition.attribute("value", String.valueOf(itemCount + 1)));
                 addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).shouldBe(Condition.not(Condition.text(String.valueOf("€" + initialProductSubtotalFormatted))), Duration.ofMillis(5000));
+                break;
+            }
+        }
+    }
+
+    private void updateItemAmountForProduct(String expectedProductName, int desiredAmount) {
+        ElementsCollection addedItems = getAllAddedToCartProductsContainers();
+
+        for (SelenideElement addedItem : addedItems) {
+            String actualProductName = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
+
+            if (actualProductName.contains(expectedProductName)) {
+                addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).setValue(String.valueOf(desiredAmount));
+                addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).shouldHave(Condition.attribute("value", String.valueOf(desiredAmount)));
                 break;
             }
         }
@@ -255,15 +482,21 @@ public class CartPage extends SelenidePage {
     }
 
     private ElementsCollection getAllAddedToCartProductsContainers() {
+        flowOverTheCartItems();
+
         return $$(ADDED_TO_CART_PRODUCT_MAIN_BOX);
     }
 
-    private SelenideElement getCartSubtotal(){
+    private SelenideElement getCartSubtotal() {
         return $(CART_SUBTOTAL_PRICE);
     }
 
     private SelenideElement getRecommendationCarouselItem() {
         return $(RECOMMENDATIONS_CAROUSEL_ITEM);
+    }
+
+    private SelenideElement getRecommendationCarouselItemWrapper() {
+        return $(RECOMMENDATIONS_CAROUSEL_ITEM_WRAPPER);
     }
 
     private SelenideElement getCartSummarySection() {
@@ -280,5 +513,76 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getProductIncrementButton() {
         return $(ADDED_TO_CART_PRODUCT_INCREMENT_BUTTON);
+    }
+
+    private void flowOverTheCartItems() {
+        $$(ADDED_TO_CART_PRODUCT_MAIN_BOX).last().scrollIntoView("{behavior: \"smooth\"}");
+        $$(ADDED_TO_CART_PRODUCT_MAIN_BOX).first().scrollIntoView("{behavior: \"smooth\"}");
+        getAddedToCartItem().scrollIntoView("{behavior: \"smooth\"}");
+        getAddedToCartItem().shouldBe(Condition.visible);
+    }
+
+    private SelenideElement getShippingFeeElement() {
+        return $(CART_SHIPPING_FEE);
+    }
+
+    private SelenideElement getSelectedShippingCountryElement() {
+        return $(CART_SHIPPING_COUNTRY_SELECTED);
+    }
+
+    private SelenideElement getShippingCountryDropdownButton() {
+        return $(CART_SHIPPING_COUNTRY_DROPDOWN_BUTTON);
+    }
+
+    private SelenideElement getShippingCountryPostcodeField() {
+        return $(CART_SHIPPING_COUNTRY_POSTCODE_FIELD);
+    }
+
+    private SelenideElement getShippingCountrySubmitButton() {
+        return $(CART_SHIPPING_COUNTRY_UPDATE_BUTTON);
+    }
+
+    private SelenideElement getCartTotalPrice() {
+        return $(CART_TOTAL_PRICE);
+    }
+
+    private SelenideElement getNextSlideButton() {
+        return $(RECOMMENDATION_CAROUSEL_NEXT_SLIDE_BUTTON);
+    }
+
+    private SelenideElement getPreviousSlideButton() {
+        return $(RECOMMENDATION_CAROUSEL_PREVIOUS_SLIDE_BUTTON);
+    }
+
+    private SelenideElement getCartErrorMessage() {
+        return $(CART_ERROR_MESSAGE);
+    }
+
+    private SelenideElement getCartProceedButton() {
+        return $(CART_PROCEED_BUTTON);
+    }
+
+    private SelenideElement getCartAlertMessage() {
+        return $(CART_ALERT_MESSAGE);
+    }
+
+    private SelenideElement getUndoLastProductRemovalButton() {
+        return $(UNDO_LAST_PRODUCT_REMOVAL_BUTTON);
+    }
+
+    private SelenideElement getCouponCodeButton() {
+        return $(CART_COUPON_CODE_BUTTON);
+    }
+
+    private SelenideElement getCouponCodeField() {
+        return $(CART_COUPON_CODE_FIELD);
+    }
+
+    private SelenideElement getSubmitCouponButton() {
+        return $(CART_COUPON_REDEEM_BUTTON);
+    }
+
+    private SelenideElement getCartCouponInlineMessage() {
+        return $(CART_COUPON_INLINE_MESSAGE);
     }
 }
