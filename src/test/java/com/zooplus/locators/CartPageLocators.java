@@ -2,6 +2,7 @@ package com.zooplus.locators;
 
 public class CartPageLocators {
 
+    // Added to cart product
     public static final String ADDED_TO_CART_PRODUCT_INFO = "[data-zta='productInfo']";
     public static final String ADDED_TO_CART_PRODUCT_MAIN_BOX = "[data-zta='standard_article']";
     public static final String ADDED_TO_CART_PRODUCT_NAME = "[data-zta='productName']";
@@ -10,6 +11,8 @@ public class CartPageLocators {
     public static final String ADDED_TO_CART_PRODUCT_REMOVE_BUTTON = "button[data-zta='quantityStepperDecrementButton']";
     public static final String ADDED_TO_CART_PRODUCT_QUANTITY_FIELD = "input[data-zta='quantityStepperInput']";
     public static final String ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE = "div[data-zta='articleQuantitySubtotal']";
+
+    // Cart summary
     public static final String CART_SUMMARY_SECTION = "div[id='cartSummary']";
     public static final String CART_SUBTOTAL_PRICE = "div[id='cartSummary'] p[data-zta='overviewSubTotalValue']";
     public static final String CART_SHIPPING_FEE = "div[id='cartSummary'] p[data-zta='shippingCostValueOverview']";
@@ -24,6 +27,8 @@ public class CartPageLocators {
     public static final String CART_COUPON_REDEEM_BUTTON = "button[data-zta='redeemCode']";
     public static final String CART_COUPON_INLINE_MESSAGE = "span[data-zta='inlineCouponMessage'] p";
     public static final String CART_PROCEED_BUTTON = "button[data-zta='gotoPreviewBottom']";
+
+    // Cart notifications
     public static final String CART_ERROR_MESSAGE = "div[data-zta='cartMessage-error'] div[data-zta='alertText'] p";
     public static final String CART_ALERT_MESSAGE = "div[data-zta='alertText'] p";
     public static final String UNDO_LAST_PRODUCT_REMOVAL_BUTTON = "div[data-zta='alertText'] a[data-zta='reAddArticleBtn']";
