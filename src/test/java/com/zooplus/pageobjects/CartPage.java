@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
+import static com.zooplus.constants.CartMessage.INVALID_COUPON_CODE_ERROR_MESSAGE;
 import static com.zooplus.constants.commons.RecommendationsCarouselConstants.*;
 import static com.zooplus.locators.CartPageLocators.*;
 import static com.zooplus.locators.commons.RecommendationsCarouselLocators.*;
@@ -213,6 +214,19 @@ public class CartPage extends SelenidePage {
         return this;
     }
 
+    public CartPage clickCouponCodeButton() {
+        getCouponCodeButton().click();
+
+        return this;
+    }
+
+    public CartPage submitCouponCode(String couponCode) {
+        getCouponCodeField().setValue(couponCode);
+        getSubmitCouponButton().click();
+
+        return this;
+    }
+
     public CartPage undoLastProductRemoval() {
         getUndoLastProductRemovalButton().click();
 
@@ -265,6 +279,15 @@ public class CartPage extends SelenidePage {
 
     public CartPage verifyProceedButtonIsDisabled() {
         getCartProceedButton().shouldBe(Condition.disabled);
+
+        return this;
+    }
+
+    public CartPage verifyCouponCodeErrorMessage(String couponCode) {
+        String actualErrorMessage = getCartCouponInlineMessage().getText();
+        String expectedErrorMessage = String.format(INVALID_COUPON_CODE_ERROR_MESSAGE, couponCode);
+
+        Assertions.assertEquals(expectedErrorMessage, actualErrorMessage);
 
         return this;
     }
@@ -539,5 +562,21 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getUndoLastProductRemovalButton() {
         return $(UNDO_LAST_PRODUCT_REMOVAL_BUTTON);
+    }
+
+    private SelenideElement getCouponCodeButton() {
+        return $(CART_COUPON_CODE_BUTTON);
+    }
+
+    private SelenideElement getCouponCodeField() {
+        return $(CART_COUPON_CODE_FIELD);
+    }
+
+    private SelenideElement getSubmitCouponButton() {
+        return $(CART_COUPON_REDEEM_BUTTON);
+    }
+
+    private SelenideElement getCartCouponInlineMessage() {
+        return $(CART_COUPON_INLINE_MESSAGE);
     }
 }

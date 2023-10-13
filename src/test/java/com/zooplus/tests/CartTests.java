@@ -157,4 +157,17 @@ public class CartTests extends WebTest {
         cartPage
                 .verifyCartPageUrl();
     }
+
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void invalidCouponCodeCannotBeApplied() {
+        String couponCode = "TestAbc123";
+
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendations()
+                .clickCouponCodeButton()
+                .submitCouponCode(couponCode)
+                .verifyCouponCodeErrorMessage(couponCode);
+    }
 }

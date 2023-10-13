@@ -22,6 +22,7 @@ public class CartPageLocators {
     public static final String CART_COUPON_CODE_BUTTON = "a[data-zta='enterCouponBtn']";
     public static final String CART_COUPON_CODE_FIELD = "input[data-zta='couponCode']";
     public static final String CART_COUPON_REDEEM_BUTTON = "button[data-zta='redeemCode']";
+    public static final String CART_COUPON_INLINE_MESSAGE = "span[data-zta='inlineCouponMessage'] p";
     public static final String CART_PROCEED_BUTTON = "button[data-zta='gotoPreviewBottom']";
     public static final String CART_ERROR_MESSAGE = "div[data-zta='cartMessage-error'] div[data-zta='alertText'] p";
     public static final String CART_ALERT_MESSAGE = "div[data-zta='alertText'] p";
