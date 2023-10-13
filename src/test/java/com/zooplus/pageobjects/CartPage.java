@@ -1,6 +1,7 @@
 package com.zooplus.pageobjects;
 
 import com.codeborne.selenide.*;
+import com.zooplus.constants.CartMessage;
 import com.zooplus.constants.commons.PriceSortingTypes;
 import com.zooplus.constants.commons.ShippingCountries;
 import com.zooplus.models.ProductItem;
@@ -129,6 +130,16 @@ public class CartPage extends SelenidePage {
         return this;
     }
 
+    public CartPage updateLowestPricedProductCountByNumber(int productsToIncrease, int desiredNumber) {
+        List<ProductItem> addedProducts = getAllAddedToCartProducts();
+        List<ProductItem> lowestPricedProducts = getLowestPricedItems(addedProducts, productsToIncrease);
+
+        for (ProductItem lowestPricedProduct : lowestPricedProducts) {
+            updateItemAmountForProduct(lowestPricedProduct.getItemId(), desiredNumber);
+        }
+        return this;
+    }
+
     public CartPage addNewProductsUntilSubtotal(double desiredSubtotal) {
         double currentSubtotal = Double.parseDouble(getCartSubtotal().getText().replaceAll("[^0-9.]", ""));
 
@@ -159,6 +170,12 @@ public class CartPage extends SelenidePage {
 
     public CartPage verifyCartPageUrl() {
         browserActions.verifyUrlContains("/cart");
+        return this;
+    }
+
+    public CartPage verifyIncreaseProductCountButtonIsDisabled() {
+        getProductIncrementButton().shouldBe(Condition.disabled);
+
         return this;
     }
 
@@ -202,7 +219,41 @@ public class CartPage extends SelenidePage {
         return this;
     }
 
-    public CartPage addProductBelowPrice(double priceCap) {
+    public CartPage verifyShippingCountry(String expectedCountry, String expectedPostcode) {
+        String actualShippingCountryAndPostCode = getSelectedShippingCountryElement().getText();
+
+        Assertions.assertTrue(actualShippingCountryAndPostCode.contains(expectedCountry));
+        Assertions.assertTrue(actualShippingCountryAndPostCode.contains(expectedPostcode));
+
+        return this;
+    }
+
+    public CartPage verifyShippingCountry(String expectedCountry) {
+        String actualShippingCountryAndPostCode = getSelectedShippingCountryElement().getText();
+
+        Assertions.assertTrue(actualShippingCountryAndPostCode.contains(expectedCountry));
+
+        return this;
+    }
+
+    public CartPage verifyMinimumOrderError(double expectedMinimumOrder) {
+        String actualCartErrorMessage = getCartErrorMessage().getText();
+        String expectedMinimumOrderFormatted = String.format("%.2f", expectedMinimumOrder).replace(',', '.');
+        String expectedCartErrorMessage = String.format(CartMessage.MINIMAL_ORDER_VALUE_MESSAGE, expectedMinimumOrderFormatted);
+
+        Assertions.assertEquals(expectedCartErrorMessage, actualCartErrorMessage);
+
+        return this;
+    }
+
+    public CartPage verifyProceedButtonIsDisabled() {
+        getCartProceedButton().shouldBe(Condition.disabled);
+
+        return this;
+    }
+
+
+    public CartPage addProductFromEmptyCartRecommendationsBelowPrice(double priceCap) {
         getRecommendationCarouselItem().shouldBe(Condition.visible, Duration.ofMillis(5000));
 
         boolean isProductFound = false;
@@ -289,7 +340,7 @@ public class CartPage extends SelenidePage {
             String itemId = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
             double itemPrice = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_PRICE).getText().replaceAll("[^0-9.]", ""));
 
-            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).getAttribute("value"));
+            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).getAttribute("value"));
             double subtotalPrice = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).getText().replaceAll("[^0-9.]", ""));
 
             ProductItem productItem = new ProductItem(itemId, itemPrice);
@@ -346,14 +397,28 @@ public class CartPage extends SelenidePage {
 
         for (SelenideElement addedItem : addedItems) {
             String actualProductName = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
-            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).getAttribute("value"));
+            int itemCount = Integer.parseInt(addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).getAttribute("value"));
             double initialProductSubtotal = Double.parseDouble(addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).getText().replaceAll("[^0-9.]", ""));
             double initialProductSubtotalFormatted = (int) (initialProductSubtotal * 100) / 100.0;
 
             if (actualProductName.contains(expectedProductName)) {
                 addedItem.$(ADDED_TO_CART_PRODUCT_INCREMENT_BUTTON).click();
-                addedItem.$(ADDED_TO_CART_PRODUCT_COUNTER).shouldHave(Condition.attribute("value", String.valueOf(itemCount + 1)));
+                addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).shouldHave(Condition.attribute("value", String.valueOf(itemCount + 1)));
                 addedItem.$(ADDED_TO_CART_PRODUCT_SUBTOTAL_PRICE).shouldBe(Condition.not(Condition.text(String.valueOf("€" + initialProductSubtotalFormatted))), Duration.ofMillis(5000));
+                break;
+            }
+        }
+    }
+
+    private void updateItemAmountForProduct(String expectedProductName, int desiredAmount) {
+        ElementsCollection addedItems = getAllAddedToCartProductsContainers();
+
+        for (SelenideElement addedItem : addedItems) {
+            String actualProductName = addedItem.$(ADDED_TO_CART_PRODUCT_NAME).getText();
+
+            if (actualProductName.contains(expectedProductName)) {
+                addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).setValue(String.valueOf(desiredAmount));
+                addedItem.$(ADDED_TO_CART_PRODUCT_QUANTITY_FIELD).shouldHave(Condition.attribute("value", String.valueOf(desiredAmount)));
                 break;
             }
         }
@@ -441,5 +506,13 @@ public class CartPage extends SelenidePage {
 
     private SelenideElement getPreviousSlideButton() {
         return $(RECOMMENDATION_CAROUSEL_PREVIOUS_SLIDE_BUTTON);
+    }
+
+    private SelenideElement getCartErrorMessage() {
+        return $(CART_ERROR_MESSAGE);
+    }
+
+    private SelenideElement getCartProceedButton() {
+        return $(CART_PROCEED_BUTTON);
     }
 }

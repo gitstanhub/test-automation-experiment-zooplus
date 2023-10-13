@@ -39,9 +39,11 @@ public class CartTests extends WebTest {
                 .addProductFromEmptyCartRecommendations()
                 .addProductFromTopRecommendations(1)
                 .addProductFromBottomRecommendations(2)
-                .verifyCartPageUrl()
                 .verifySubTotalPricePerProduct()
                 .verifySubtotalPriceForCart();
+
+        cartPage
+                .verifyCartPageUrl();
     }
 
     @Test
@@ -51,12 +53,16 @@ public class CartTests extends WebTest {
                 .openCartPage()
                 .addProductFromEmptyCartRecommendations()
                 .addProductFromTopRecommendations(4)
-                .addProductFromBottomRecommendations(4)
+                .addProductFromBottomRecommendations(4);
+
+        cartPage
                 .deleteHighestPricedProduct(1)
                 .increaseLowestPricedProductCountByOne(3)
-                .verifyCartPageUrl()
                 .verifySubTotalPricePerProduct()
                 .verifySubtotalPriceForCart();
+
+        cartPage
+                .verifyCartPageUrl();
     }
 
     @Test
@@ -71,12 +77,21 @@ public class CartTests extends WebTest {
 
         cartPage
                 .openCartPage()
-                .addProductFromEmptyCartRecommendations()
+                .addProductFromEmptyCartRecommendations();
+
+        cartPage
                 .selectShippingCountry(firstCountryName)
-                .verifyShippingFee(firstCountryShippingFee)
+                .verifyShippingCountry(firstCountryName)
+                .verifyShippingFee(firstCountryShippingFee);
+
+        cartPage
                 .selectShippingCountry(secondCountryName, secondCountryPostcode)
+                .verifyShippingCountry(secondCountryName, secondCountryPostcode)
                 .verifyShippingFee(secondCountryShippingFee)
                 .verifyTotalPriceForCart();
+
+        cartPage
+                .verifyCartPageUrl();
     }
 
     @Test
@@ -89,10 +104,43 @@ public class CartTests extends WebTest {
 
         cartPage
                 .openCartPage()
-                .addProductBelowPrice(freeShippingCap)
+                .addProductFromEmptyCartRecommendationsBelowPrice(freeShippingCap);
+
+        cartPage
                 .selectShippingCountry(shippingCountryName)
                 .verifyShippingFee(initialShippingFee)
                 .addNewProductsUntilSubtotal(freeShippingCap)
                 .verifyShippingFee(updatedShippingFee);
+
+        cartPage
+                .verifyCartPageUrl();
+    }
+
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void cannotProceedWithOrderBelowMinimal() {
+        double minimalOrderPrice = 19.00;
+
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendationsBelowPrice(minimalOrderPrice)
+                .verifyMinimumOrderError(minimalOrderPrice)
+                .verifyProceedButtonIsDisabled();
+
+        cartPage
+                .verifyCartPageUrl();
+    }
+
+    @Test
+    @SidCookie(sidCookieValue = "stanislav-dmitruk-test")
+    void cannotAddProductItemsAboveLimit() {
+
+        cartPage
+                .openCartPage()
+                .addProductFromEmptyCartRecommendations()
+                .updateLowestPricedProductCountByNumber(1, 20)
+                .verifyIncreaseProductCountButtonIsDisabled();
+
+        System.out.println("test");
     }
 }
