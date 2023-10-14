@@ -34,6 +34,9 @@ git clone https://github.com/gitstanhub/test-automation-zooplus.git
 ## Usage
 To run the test suite from the project root directory:
 ```zsh
+gradle wrapper
+```
+```zsh
 ./gradlew clean test --tests CartTests
 ```
 
