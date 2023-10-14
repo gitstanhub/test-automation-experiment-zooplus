@@ -12,7 +12,7 @@
 
 ## Overview
 This is a test automation suite covering the functionality of [Cart Page](https://www.zooplus.com/checkout/cart) from Zooplus online shop.  
-It supports replacement of Sid cookie with custom value for personalisation of test runs using `@SidCookie` annotation.
+It supports replacement of SID cookie with custom value for personalisation of test runs using `@SidCookie` annotation.
 
 ### Technology stack
 * Java
