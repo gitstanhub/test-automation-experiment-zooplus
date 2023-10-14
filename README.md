@@ -29,7 +29,7 @@ It supports replacement of Sid cookie with custom value for personalisation of t
 git clone https://github.com/gitstanhub/test-automation-zooplus.git
 ```
 
-* Make sure to have Java installed on your local machine
+* Make sure to have Java installed on your machine
 
 ## Usage
 To run the test suite from the project root directory:
