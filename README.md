@@ -32,11 +32,7 @@ git clone https://github.com/gitstanhub/test-automation-zooplus.git
 * Make sure to have Java installed on your local machine
 
 ## Usage
-To run the test suite from the project root directory, first generate the Gradle executables once:
-```zsh
-gradle wrapper
-```
-Then run with:
+To run the test suite from the project root directory:
 ```zsh
 ./gradlew clean test --tests CartTests
 ```
