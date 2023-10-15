@@ -32,9 +32,13 @@ git clone https://github.com/gitstanhub/test-automation-zooplus.git
 * Make sure to have Java installed on your machine
 
 ## Usage
-To run the test suite from the project root directory:
+To run the test suite from the project root directory using Gradle Wrapper:
 ```zsh
 ./gradlew clean test --tests CartTests
+```
+... or using Gradle if it's installed on your machine:
+```zsh
+gradle clean test --tests CartTests
 ```
 
 To generate Allure report with the results from the root directory:
