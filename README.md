@@ -16,7 +16,7 @@ It supports replacement of SID cookie with a custom value using `@SidCookie` ann
 
 ### Technology stack
 * Java
-* Selenide
+* Selenide, Selenium
 * Gradle
 * JUnit 5
 * Allure
